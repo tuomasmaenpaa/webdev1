@@ -82,7 +82,14 @@ const getUser = (email, password) => {
  */
 const getUserById = userId => {
   // TODO: 8.4 Find user by user id
-  throw new Error('Not Implemented');
+
+  var index = data.users.findIndex(user => user._id === userId);
+  if(index === -1){
+    return undefined;
+  }
+  // Make copy for return
+  const user = JSON.parse(JSON.stringify(data.users[index]));
+  return user;
 };
 
 /**
@@ -94,7 +101,15 @@ const getUserById = userId => {
 const deleteUserById = userId => {
   // TODO: 8.4 Delete user with a given id
   // Hint: Array's findIndex() and splice() methods could be handy here.
-  throw new Error('Not Implemented');
+
+  var index = data.users.findIndex(user => user._id === userId);
+  
+  if(index === -1){
+    return undefined;
+  }
+  const user = data.users[index];
+  data.users.splice(index,1);
+  return user
 };
 
 /**
@@ -143,8 +158,21 @@ const saveNewUser = user => {
  * @throws {Error} error object with message "Unknown role"
  */
 const updateUserRole = (userId, role) => {
-  // TODO: 8.3 Update user's role
-  throw new Error('Not Implemented');
+  // Checks first
+  var index = data.users.findIndex(user => user._id === userId);
+  if(index === -1){
+    return undefined;
+  }
+  if(!(role === "customer" || role === "admin")){
+    throw("Unknown role");
+  } 
+  // Change role
+  const updatedUser = data.users[index];
+  updatedUser.role = role;
+  // Return copy
+  return JSON.parse(JSON.stringify(updatedUser));
+
+
 };
 
 /**

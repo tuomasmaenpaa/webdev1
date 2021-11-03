@@ -70,7 +70,24 @@ const handleRequest = async(request, response) => {
   if (matchUserId(filePath)) {
     // TODO: 8.6 Implement view, update and delete a single user by ID (GET, PUT, DELETE)
     // You can use parseBodyJson(request) from utils/requestUtils.js to parse request body
-    throw new Error('Not Implemented');
+    
+    const LogUser = await getCurrentUser(request);
+    
+    const parts = filePath.split('/');
+    const id = parts[parts.length -1];
+
+
+    if (method.toUpperCase() === 'GET'){
+      return viewUser(response, id, LogUser)
+    }
+    else if (method.toUpperCase() === 'PUT'){    
+      const userInfo = await parseBodyJson(request);
+      return updateUser(response, id, LogUser, userInfo)   
+    }
+    else if (method.toUpperCase() === 'DELETE'){
+      return deleteUser(response, id, LogUser)
+    }
+
   }
 
   // Default to 404 Not Found if unknown url
@@ -97,7 +114,8 @@ const handleRequest = async(request, response) => {
     // ./utils/responseUtils.js to send the response in JSON format.
     //
     // TODO: 8.5 Add authentication (only allowed to users with role "admin")
-    return await getAllUsers(response);
+    const allUsers = await getAllUsers(response);
+    responseUtils.sendJson(response,JSON.parse(JSON.stringify(allUsers)), 200);
 
   }
 
@@ -111,7 +129,19 @@ const handleRequest = async(request, response) => {
     // TODO: 8.4 Implement registration
     // You can use parseBodyJson(request) method from utils/requestUtils.js to parse request body.
     // 
-    throw new Error('Not Implemented');
+    const userInfo = await parseBodyJson(request);
+    const userData = {
+      name: userInfo.name,
+      email: userInfo.email,
+      password: userInfo.password,
+    };
+    
+    // Make necessary checks
+    if(emailInUse(userData.email) || !(validateUser(userData).length === 0)){
+      return responseUtils.badRequest(response, "400 Bad Request");
+    }
+    responseUtils.sendJson(response, saveNewUser(userData),201);
+
   }
 };
 

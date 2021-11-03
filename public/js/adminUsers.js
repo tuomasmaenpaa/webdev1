@@ -14,7 +14,32 @@
  *
  *       - Each cloned template fragment should be appended to <div id="users-container">
  *       - Use getJSON() function from utils.js to fetch user data from server
- *
+ */
+ list_users = async () =>{
+  var template = document.getElementById("user-template");
+  var users = await getJSON('/api/users');
+
+  users.forEach((user) =>{
+      var cclone = template.cloneNode(true);
+      var user_data = user
+
+      cclone.content.querySelector(".item-row").id = "user-" + user_data['_id'];
+      cclone.content.querySelector(".user-name").id = "name-" + user_data['_id'];
+      cclone.content.querySelector(".user-email").id = "email-" + user_data['_id'];
+      cclone.content.querySelector(".user-role").id = "role-" + user_data['_id'];
+      cclone.content.querySelector(".modify-button").id = "modify-" + user_data['_id'];
+      cclone.content.querySelector(".delete-button").id = "delete-" + user_data['_id'];
+
+      cclone.content.querySelector(".user-name").innerText = user_data['name'];
+      cclone.content.querySelector(".user-email").innerText = user_data['email'];
+      cclone.content.querySelector(".user-role").innerText = user_data['role'];
+
+      document.getElementById("users-container").appendChild(cclone.content);
+  });
+};
+list_users();
+
+/*
  * Updating/modifying and deleting existing users
  *       - Use postOrPutJSON() function from utils.js to send your data back to server
  *       - Use deleteResource() function from utils.js to delete users from server
