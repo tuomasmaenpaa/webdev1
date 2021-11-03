@@ -18,6 +18,12 @@
  list_users = async () =>{
   var template = document.getElementById("user-template");
   var users = await getJSON('/api/users');
+  var i = 1;
+
+  const node = document.getElementById("users-container");
+  while(node.firstChild){
+    node.removeChild(node.lastChild);
+  }
 
   users.forEach((user) =>{
       var cclone = template.cloneNode(true);
@@ -35,9 +41,10 @@
       cclone.content.querySelector(".user-role").innerText = user_data['role'];
 
       document.getElementById("users-container").appendChild(cclone.content);
+      ++i;
   });
+  console.log("For loop spun for", i, "rounds");
 };
-list_users();
 
 /*
  * Updating/modifying and deleting existing users

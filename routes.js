@@ -2,6 +2,7 @@ const responseUtils = require('./utils/responseUtils');
 const { acceptsJson, isJson, parseBodyJson } = require('./utils/requestUtils');
 const { renderPublic } = require('./utils/render');
 const { emailInUse, getAllUsers, saveNewUser, validateUser } = require('./utils/users');
+const { getCurrentUser } = require('./auth/auth');
 
 /**
  * Known API routes and their allowed methods
@@ -114,9 +115,20 @@ const handleRequest = async(request, response) => {
     // ./utils/responseUtils.js to send the response in JSON format.
     //
     // TODO: 8.5 Add authentication (only allowed to users with role "admin")
-    const allUsers = await getAllUsers(response);
-    responseUtils.sendJson(response,JSON.parse(JSON.stringify(allUsers)), 200);
 
+    const currentUser = await getCurrentUser(request);
+
+    // Check that user is properly encoded and that Auhtorization header exists
+    if (currentUser === null || currentUser === undefined){
+      return responseUtils.basicAuthChallenge(response);
+    }else if(currentUser.role === 'admin'){
+      const allUsers = await getAllUsers(response);
+      responseUtils.sendJson(response,JSON.parse(JSON.stringify(allUsers)), 200);
+    }else if(currentUser.role === 'customer'){
+      return responseUtils.forbidden(response, "403 Forbidden");
+    }else{
+      return responseUtils.basicAuthChallenge(response);
+    }
   }
 
   // register new user
