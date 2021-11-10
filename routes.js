@@ -79,14 +79,14 @@ const handleRequest = async(request, response) => {
 
 
     if (method.toUpperCase() === 'GET'){
-      return viewUser(response, id, LogUser)
+      return viewUser(response, id, LogUser);
     }
     else if (method.toUpperCase() === 'PUT'){    
       const userInfo = await parseBodyJson(request);
-      return updateUser(response, id, LogUser, userInfo)   
+      return updateUser(response, id, LogUser, userInfo);   
     }
     else if (method.toUpperCase() === 'DELETE'){
-      return deleteUser(response, id, LogUser)
+      return deleteUser(response, id, LogUser);
     }
 
   }
@@ -123,7 +123,7 @@ const handleRequest = async(request, response) => {
       return responseUtils.basicAuthChallenge(response);
     }else if(currentUser.role === 'admin'){
       const allUsers = await getAllUsers(response);
-      responseUtils.sendJson(response,JSON.parse(JSON.stringify(allUsers)), 200);
+      responseUtils.sendJson(response, JSON.parse(JSON.stringify(allUsers)), 200);
     }else if(currentUser.role === 'customer'){
       return responseUtils.forbidden(response, "403 Forbidden");
     }else{
@@ -152,7 +152,7 @@ const handleRequest = async(request, response) => {
     if(emailInUse(userData.email) || !(validateUser(userData).length === 0)){
       return responseUtils.badRequest(response, "400 Bad Request");
     }
-    responseUtils.sendJson(response, saveNewUser(userData),201);
+    responseUtils.sendJson(response, saveNewUser(userData), 201);
 
   }
 };

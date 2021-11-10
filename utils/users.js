@@ -83,7 +83,7 @@ const getUser = (email, password) => {
 const getUserById = userId => {
   // TODO: 8.4 Find user by user id
 
-  var index = data.users.findIndex(user => user._id === userId);
+  const index = data.users.findIndex(user => user._id === userId);
   if(index === -1){
     return undefined;
   }
@@ -102,14 +102,14 @@ const deleteUserById = userId => {
   // TODO: 8.4 Delete user with a given id
   // Hint: Array's findIndex() and splice() methods could be handy here.
 
-  var index = data.users.findIndex(user => user._id === userId);
+  const index = data.users.findIndex(user => user._id === userId);
   
   if(index === -1){
     return undefined;
   }
   const user = data.users[index];
-  data.users.splice(index,1);
-  return user
+  data.users.splice(index, 1);
+  return user;
 };
 
 /**
@@ -159,7 +159,7 @@ const saveNewUser = user => {
  */
 const updateUserRole = (userId, role) => {
   // Checks first
-  var index = data.users.findIndex(user => user._id === userId);
+  const index = data.users.findIndex(user => user._id === userId);
   if(index === -1){
     return undefined;
   }
