@@ -1,7 +1,7 @@
 const responseUtils = require('./utils/responseUtils');
 const { acceptsJson, isJson, parseBodyJson } = require('./utils/requestUtils');
 const { renderPublic } = require('./utils/render');
-const { emailInUse, getAllUsers, saveNewUser, validateUser } = require('./utils/users');
+const { emailInUse, getAllUsers, saveNewUser, validateUser, getUserById, updateUserRole, deleteUserById } = require('./utils/users');
 const { getCurrentUser } = require('./auth/auth');
 
 /**
@@ -58,7 +58,7 @@ const matchUserId = url => {
   return matchIdRoute(url, 'users');
 };
 
-const handleRequest = async(request, response) => {
+const handleRequest = async (request, response) => {
   const { url, method, headers } = request;
   const filePath = new URL(url, `http://${headers.host}`).pathname;
 
@@ -74,50 +74,52 @@ const handleRequest = async(request, response) => {
 
     // Working: Should respond with "401 Unauthorized" when Authorization header is missing
     // Working: Should respond with Basic Auth Challenge when Authorization header is missing
-    if (!request.headers.authorization) {
+
+    const logUser = await getCurrentUser(request);
+
+    if (!logUser) {
       response.statusCode = 401;
       response.statusMessage = 'Unauthorized';
       return responseUtils.basicAuthChallenge(response);
-    } 
-    // Working: Should respond with Basic Auth Challenge when Authorization credentials are incorrect
-      else if (!request.headers.currentUser) {
-      return responseUtils.basicAuthChallenge(response);
-    }
-   
-    const LogUser = await getCurrentUser(request);
-    
-    // Not working: Should respond with status code 404 when user does not exist
-    if (LogUser === null) {
-      response.statusCode = 404;
-      response.end();
     }
 
     const parts = filePath.split('/');
-    const id = parts[parts.length -1];
+    const idUserResource = parts[parts.length - 1];
 
-    if (method.toUpperCase() === 'GET'){
-      return viewUser(response, id, LogUser);
+    const resUser = getUserById(idUserResource);
+
+    //console.log('!!!!', logUser.role)
+
+    // Should respond with "403 Forbidden" when customer credentials are received
+    if (logUser.role !== 'admin') {
+      return responseUtils.forbidden(response);
     }
-    else if (method.toUpperCase() === 'PUT'){    
+
+    // Should respond with status code 404 when user does not exist
+    if (!resUser) {
+      response.statusCode = 404;
+      return response.end();
+    }
+
+    if (method.toUpperCase() === 'GET') {
+      return responseUtils.sendJson(response, resUser, 200);
+    }
+    else if (method.toUpperCase() === 'PUT') {
       const userInfo = await parseBodyJson(request);
-      return updateUser(response, id, LogUser, userInfo);   
+      const isRoleSet = Boolean(userInfo.role);
+      const isValidRole = Boolean(['admin', 'customer'].includes(userInfo.role));
+      if (!isRoleSet || !isValidRole) {
+        return responseUtils.badRequest(response, 'Invalid role');
+      }
+      updateUserRole(idUserResource, userInfo.role)
+      return responseUtils.sendJson(response, getUserById(idUserResource), 200);
+      
     }
-    else if (method.toUpperCase() === 'DELETE'){
-      return deleteUser(response, id, LogUser);
+    else if (method.toUpperCase() === 'DELETE') {
+      deleteUserById(idUserResource, resUser);
+      return responseUtils.sendJson(response, resUser, 200);
     }
-  
-    // Not working: Should respond with "403 Forbidden" when customer credentials are received
-    if (LogUser.role === 'customer') {
-      response.statusCode = 403;
-      response.statusMessage = 'Forbidden';
-      response.end();
-    }
-    // Not working: Should respond with JSON when admin credentials are received
-    else if (LogUser.role === 'admin') {
-      responseUtils.sendJson(response);
-    } 
   }
-
 
   // Default to 404 Not Found if unknown url
   if (!(filePath in allowedMethods)) return responseUtils.notFound(response);
@@ -147,14 +149,14 @@ const handleRequest = async(request, response) => {
     const currentUser = await getCurrentUser(request);
 
     // Check that user is properly encoded and that Auhtorization header exists
-    if (currentUser === null || currentUser === undefined){
+    if (currentUser === null || currentUser === undefined) {
       return responseUtils.basicAuthChallenge(response);
-    }else if(currentUser.role === 'admin'){
+    } else if (currentUser.role === 'admin') {
       const allUsers = await getAllUsers(response);
       responseUtils.sendJson(response, JSON.parse(JSON.stringify(allUsers)), 200);
-    }else if(currentUser.role === 'customer'){
+    } else if (currentUser.role === 'customer') {
       return responseUtils.forbidden(response, "403 Forbidden");
-    }else{
+    } else {
       return responseUtils.basicAuthChallenge(response);
     }
   }
@@ -175,9 +177,9 @@ const handleRequest = async(request, response) => {
       email: userInfo.email,
       password: userInfo.password,
     };
-    
+
     // Make necessary checks
-    if(emailInUse(userData.email) || !(validateUser(userData).length === 0)){
+    if (emailInUse(userData.email) || !(validateUser(userData).length === 0)) {
       return responseUtils.badRequest(response, "400 Bad Request");
     }
     responseUtils.sendJson(response, saveNewUser(userData), 201);
