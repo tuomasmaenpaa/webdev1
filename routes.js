@@ -71,12 +71,29 @@ const handleRequest = async(request, response) => {
   if (matchUserId(filePath)) {
     // TODO: 8.6 Implement view, update and delete a single user by ID (GET, PUT, DELETE)
     // You can use parseBodyJson(request) from utils/requestUtils.js to parse request body
-    
+
+    // Working: Should respond with "401 Unauthorized" when Authorization header is missing
+    // Working: Should respond with Basic Auth Challenge when Authorization header is missing
+    if (!request.headers.authorization) {
+      response.statusCode = 401;
+      response.statusMessage = 'Unauthorized';
+      return responseUtils.basicAuthChallenge(response);
+    } 
+    // Working: Should respond with Basic Auth Challenge when Authorization credentials are incorrect
+      else if (!request.headers.currentUser) {
+      return responseUtils.basicAuthChallenge(response);
+    }
+   
     const LogUser = await getCurrentUser(request);
     
+    // Not working: Should respond with status code 404 when user does not exist
+    if (LogUser === null) {
+      response.statusCode = 404;
+      response.end();
+    }
+
     const parts = filePath.split('/');
     const id = parts[parts.length -1];
-
 
     if (method.toUpperCase() === 'GET'){
       return viewUser(response, id, LogUser);
@@ -88,8 +105,19 @@ const handleRequest = async(request, response) => {
     else if (method.toUpperCase() === 'DELETE'){
       return deleteUser(response, id, LogUser);
     }
-
+  
+    // Not working: Should respond with "403 Forbidden" when customer credentials are received
+    if (LogUser.role === 'customer') {
+      response.statusCode = 403;
+      response.statusMessage = 'Forbidden';
+      response.end();
+    }
+    // Not working: Should respond with JSON when admin credentials are received
+    else if (LogUser.role === 'admin') {
+      responseUtils.sendJson(response);
+    } 
   }
+
 
   // Default to 404 Not Found if unknown url
   if (!(filePath in allowedMethods)) return responseUtils.notFound(response);
