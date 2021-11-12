@@ -111,7 +111,7 @@ const handleRequest = async (request, response) => {
       if (!isRoleSet || !isValidRole) {
         return responseUtils.badRequest(response, 'Invalid role');
       }
-      updateUserRole(idUserResource, userInfo.role)
+      updateUserRole(idUserResource, userInfo.role);
       return responseUtils.sendJson(response, getUserById(idUserResource), 200);
       
     }
