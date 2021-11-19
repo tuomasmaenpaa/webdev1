@@ -147,3 +147,6 @@ config/local*.*
 
 #mocha reports
 mochawesome-report
+
+# environment variables
+.env
