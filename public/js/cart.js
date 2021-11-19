@@ -1,28 +1,56 @@
+let sessionStorage = window.sessionStorage;
+
+document.querySelector("#place-order-button").addEventListener("click",() => placeOrder(), false);
+
+
 const addToCart = productId => {
   // TODO 9.2
   // use addProductToCart(), available already from /public/js/utils.js
   // call updateProductAmount(productId) from this file
+  addProductToCart(productId);
+  updateProductAmount(productId);
+
 };
 
 const decreaseCount = productId => {
   // TODO 9.2
   // Decrease the amount of products in the cart, /public/js/utils.js provides decreaseProductCount()
   // Remove product from cart if amount is 0,  /public/js/utils.js provides removeElement = (containerId, elementId
+  
+  const productCount = getProductCountFromCart(productId);
+  console.log(productCount);
+  if(productCount > 1){
+    decreaseProductCount(productId);
+    document.querySelector("#amount-" + productId).innerText = productCount.toString() + "x";
+  }else{
+    removeElement('cart-container','product-'+productId);
+  }
 
+  updateProductAmount(productId);
 };
 
 const updateProductAmount = productId => {
   // TODO 9.2
   // - read the amount of products in the cart, /public/js/utils.js provides getProductCountFromCart(productId)
   // - change the amount of products shown in the right element's innerText
+  const productAmount = getProductCountFromCart(productId);
+  sessionStorage.setItem(productId, productAmount);
+  document.querySelector("#amount-" + productId).innerText = productAmount.toString() + "x";
 
 };
+
 
 const placeOrder = async() => {
   // TODO 9.2
   // Get all products from the cart, /public/js/utils.js provides getAllProductsFromCart()
   // show the user a notification: /public/js/utils.js provides createNotification = (message, containerId, isSuccess = true)
   // for each of the products in the cart remove them, /public/js/utils.js provides removeElement(containerId, elementId)
+  
+  createNotification("Successfully created an order!", "notifications-container", true);
+  clearCart();
+  let container = document.getElementById("cart-container");
+  container.innerHTML = '';
+
 };
 
 (async() => {
@@ -49,5 +77,40 @@ const placeOrder = async() => {
   //          clone.querySelector('button').addEventListener('click', () => addToCart(productId, productName));
   //
   // - in the end remember to append the modified cart item to the cart 
+  let template = document.getElementById("cart-item-template");
+  const productsAvailable = await getJSON('/api/products');
+  productsInCart = getAllProductsFromCart();
+  productsInCart.forEach((productData) => {
+   
+    /**
+     * Since getAllProductsFromCart returns a list with the product ids as 'name',
+     * a little trickery is needed to get the right information about the product
+     */
+    const product = productsAvailable.find(p => p._id === productData['name'])
+    if(product){
+      const productId = product['_id'];
+      const productName = product['name'];
+
+
+      let templateClone = template.cloneNode(true);
+      templateClone.content.querySelector(".item-row").id = "product-" + productId;
+      templateClone.content.querySelector("h3.product-name").id = "name-" + productId;
+      templateClone.content.querySelector("p.product-price").id = "price-" + productId;
+      templateClone.content.querySelector("p.product-amount").id = "amount-" + productId;
+
+      templateClone.content.querySelectorAll("button")[0].id = "plus-" + productId;
+      templateClone.content.querySelector("#plus-"+productId).addEventListener('click', () => addToCart(productId, productName));
+
+      templateClone.content.querySelectorAll("button")[1].id = "minus-" + productId;
+      templateClone.content.querySelectorAll("button")[1].addEventListener('click', () => decreaseCount(productId));
+
+      templateClone.content.querySelector("h3.product-name").innerText = productName;
+      templateClone.content.querySelector("p.product-amount").innerText = getProductCountFromCart(productId) + "x";
+      templateClone.content.querySelector("p.product-price").innerText = product['price'];
+
+      document.getElementById("cart-container").appendChild(templateClone.content);
+    }
+  })
+
 
 })();

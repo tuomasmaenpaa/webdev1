@@ -1,8 +1,10 @@
 const responseUtils = require('./utils/responseUtils');
+const products = require('./products.json');
 const { acceptsJson, isJson, parseBodyJson } = require('./utils/requestUtils');
 const { renderPublic } = require('./utils/render');
 const { emailInUse, getAllUsers, saveNewUser, validateUser, getUserById, updateUserRole, deleteUserById } = require('./utils/users');
 const { getCurrentUser } = require('./auth/auth');
+
 
 /**
  * Known API routes and their allowed methods
@@ -12,7 +14,8 @@ const { getCurrentUser } = require('./auth/auth');
  */
 const allowedMethods = {
   '/api/register': ['POST'],
-  '/api/users': ['GET']
+  '/api/users': ['GET'],
+  '/api/products': ['GET']
 };
 
 /**
@@ -184,6 +187,18 @@ const handleRequest = async (request, response) => {
     }
     responseUtils.sendJson(response, saveNewUser(userData), 201);
 
+  }
+
+  // Get products
+  if (filePath === '/api/products' && method.toUpperCase() === 'GET') {
+    const currentUser = await getCurrentUser(request);
+    if (currentUser === null || currentUser === undefined){
+      return responseUtils.basicAuthChallenge(response);
+    }else if(currentUser.role === 'admin' || currentUser.role === 'customer'){
+      return responseUtils.sendJson(response, products);
+    }else{
+      return responseUtils.basicAuthChallenge(response);
+    }
   }
 };
 
