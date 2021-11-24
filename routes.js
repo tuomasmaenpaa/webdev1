@@ -4,7 +4,8 @@ const { acceptsJson, isJson, parseBodyJson } = require('./utils/requestUtils');
 const { renderPublic } = require('./utils/render');
 const { emailInUse, getAllUsers, saveNewUser, validateUser, getUserById, updateUserRole, deleteUserById } = require('./utils/users');
 const { getCurrentUser } = require('./auth/auth');
-
+const User = require('./models/user');
+const { expect } = require('chai');
 
 /**
  * Known API routes and their allowed methods
@@ -89,7 +90,7 @@ const handleRequest = async (request, response) => {
     const parts = filePath.split('/');
     const idUserResource = parts[parts.length - 1];
 
-    const resUser = getUserById(idUserResource);
+    const resUser = await User.findById(idUserResource).exec();
 
     //console.log('!!!!', logUser.role)
 
@@ -114,12 +115,17 @@ const handleRequest = async (request, response) => {
       if (!isRoleSet || !isValidRole) {
         return responseUtils.badRequest(response, 'Invalid role');
       }
-      updateUserRole(idUserResource, userInfo.role);
-      return responseUtils.sendJson(response, getUserById(idUserResource), 200);
+      const existingUser = User.findById(userId).exec();
+
+      // change user's name and save changes
+      existingUser.role = userInfo.role;
+      await existingUser.save();
+
+      return responseUtils.sendJson(response, await User.findById(idUserResource).exec(), 200);
       
     }
     else if (method.toUpperCase() === 'DELETE') {
-      deleteUserById(idUserResource, resUser);
+      await User.deleteOne({email: resUser.email});
       return responseUtils.sendJson(response, resUser, 200);
     }
   }
@@ -155,7 +161,7 @@ const handleRequest = async (request, response) => {
     if (currentUser === null || currentUser === undefined) {
       return responseUtils.basicAuthChallenge(response);
     } else if (currentUser.role === 'admin') {
-      const allUsers = await getAllUsers(response);
+      const allUsers = await User.find({});
       responseUtils.sendJson(response, JSON.parse(JSON.stringify(allUsers)), 200);
     } else if (currentUser.role === 'customer') {
       return responseUtils.forbidden(response, "403 Forbidden");
@@ -182,11 +188,17 @@ const handleRequest = async (request, response) => {
     };
 
     // Make necessary checks
-    if (emailInUse(userData.email) || !(validateUser(userData).length === 0)) {
+    /*const emailTaken = await User.findOne({ email: userData.email }).exec();
+    if (emailTaken || !(validateUser(userData).length === 0)) {
       return responseUtils.badRequest(response, "400 Bad Request");
+    }*/
+    const newUser = new User(userData);
+    try{
+      await newUser.save();
+      responseUtils.sendJson(response, newUser, 201);
+    }catch(e){
+      return responseUtils.badRequest(response, e.message);
     }
-    responseUtils.sendJson(response, saveNewUser(userData), 201);
-
   }
 
   // Get products

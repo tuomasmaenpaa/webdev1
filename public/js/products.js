@@ -1,8 +1,9 @@
 
 let sessionStorage = window.sessionStorage;
+/*
 let productContainer = document.querySelector('#products-container')
 productContainer.addEventListener("click", addProductToCart, false);
-
+*/
 
 const addToCart = (productId, productName) => {
   // TODO 9.2

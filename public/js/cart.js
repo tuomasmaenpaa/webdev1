@@ -1,7 +1,5 @@
 let sessionStorage = window.sessionStorage;
 
-document.querySelector("#place-order-button").addEventListener("click",() => placeOrder(), false);
-
 
 const addToCart = productId => {
   // TODO 9.2
@@ -52,6 +50,8 @@ const placeOrder = async() => {
   container.innerHTML = '';
 
 };
+document.querySelector("#place-order-button").addEventListener("click",() => placeOrder(), false);
+
 
 (async() => {
   // TODO 9.2

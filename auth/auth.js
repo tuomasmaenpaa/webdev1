@@ -1,5 +1,5 @@
-const { getUser } = require("../utils/users");
 const { getCredentials } = require("../utils/requestUtils");
+const User = require("../models/user");
 /**
  * Get current user based on the request headers
  *
@@ -18,8 +18,15 @@ const getCurrentUser = async request => {
   if(credentials === null){
     return null;
   }
-  const user = getUser(credentials[0], credentials[1]);
-  return user;
+
+  const emailUser = await User.findOne({email: credentials[0]}).exec();
+  if (emailUser !== null && await emailUser.checkPassword(credentials[1])){
+    return emailUser;
+  }
+  else{
+    return null;
+  }
+
 
 };
 
