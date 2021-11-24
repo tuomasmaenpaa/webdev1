@@ -115,9 +115,9 @@ const handleRequest = async (request, response) => {
       if (!isRoleSet || !isValidRole) {
         return responseUtils.badRequest(response, 'Invalid role');
       }
-      const existingUser = User.findById(userId).exec();
+      const existingUser = await User.findById(idUserResource).exec();
 
-      // change user's name and save changes
+
       existingUser.role = userInfo.role;
       await existingUser.save();
 
@@ -188,10 +188,10 @@ const handleRequest = async (request, response) => {
     };
 
     // Make necessary checks
-    /*const emailTaken = await User.findOne({ email: userData.email }).exec();
-    if (emailTaken || !(validateUser(userData).length === 0)) {
+    const emailTaken = await User.findOne({ email: userData.email }).exec();
+    if (emailTaken /*|| !(validateUser(userData).length === 0)*/) {
       return responseUtils.badRequest(response, "400 Bad Request");
-    }*/
+    }
     const newUser = new User(userData);
     try{
       await newUser.save();
